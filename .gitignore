@@ -1,0 +1,7 @@
+data/book_half_utf-8
+data/morphDict
+data/book_full_utf-8
+*~
+*.un~
+*.swp
+./.vscode
