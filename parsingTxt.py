@@ -37,8 +37,7 @@ def main():
         if os.path.isdir(args['dictionary_path']):
             initCommand += args['dictionary_path']
         else:
-            raise Exception('Dictionary Not Found')
-
+            raise FileNotFoundError 
     m = MeCab.Tagger(initCommand)
 
     if len(target) > 0:

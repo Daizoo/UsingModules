@@ -1,13 +1,13 @@
 __doc__ = """
     OverView:
-    テキストファイル、もしくはそれらが入ったディレクトリを受取り、形態素解析の結果を出力する
+    テキストファイル、もしくはそれらが入ったディレクトリを受取り、形態素解析の結果をcsvに出力する
 
     Usage:
         parsingTxt <target> <output> [-r | --directroy] [-x <altPos>] [-d | --dict <dictionary_path>] [-p  <pos>] 
 
     Options:
         target                           : 解析対象のtxtファイル、もしくはディレクトリ
-        output                           : 出力先のファイル、もしくはディレクトリ
+        output                           : 出力先のcsv
         -r --directroy                   : 対象がディレクトリの場合は設定必須
         -x <altPos>                      : 品詞推定の切り替え(on/off)及び、未知語の出力品詞の設定
         -d --dict <dictionary_path>      : 外部辞書を使用する場合
