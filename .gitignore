@@ -5,4 +5,4 @@ data/book_full_utf-8
 *.un~
 *.swp
 ./.vscode
-./data
+./pytorch_tutorials/data
