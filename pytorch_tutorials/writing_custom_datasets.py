@@ -1,6 +1,7 @@
-# %%
+# %%[markdown]
 # この章では学習や評価時に使うDatasets, DataLoader, transformsを
 # 自作する。
+# %%
 from __future__ import print_function, division
 import os
 import torch
@@ -36,12 +37,13 @@ plt.figure()
 show_landmarks(io.imread(os.path.join('data/faces/', img_name)),
                landmarks)
 plt.show()
-# %%
+# %%[markdown]
 # 自作のDatasetを作成する
 # 作成するときは必ずtorch.utils.data.Datasetクラスを継承する
 # また、次の二つの関数をオーバーライドしなければならない
 # - `__len__` データセットの大きさを返す
 # - `__getitem__` i番目のサンプルを返す。dataset[i]みたいな書き方ができるように成る
+# %%
 
 
 class FaceLandmarksDataset(Dataset):
@@ -92,4 +94,94 @@ for i in range(len(face_dataset)):
     if i == 3:
         plt.show()
         break
+# %%
+# [markdown]
+# ここではネットワークへの入力のために画像のサイズを統一する
+# ここでは次の3つの変換(Transformer)用のクラスを定義する
+# - `Rescale`: 画像をスケーリングする
+# - `RandomCrop`: 画像をランダムにクロップする
+# - `ToTensor`: numpy image(numpy用の画像クラス)をtorch imageに変換する(軸を入れ替える必要あり)。
+# %%
+
+
+class Rescale(object):
+
+    def __init__(self, output_size):
+        assert isinstance(output_size, (int, tuple))
+        # これは入力形式がちゃんと守られているか確認するもの
+        self.output_size = output_size
+
+    def __call__(self, sample):
+        image, landmarks = sample['image'], sample['landmarks']
+        h, w = image.shape[:2]
+        if isinstance(self.output_size, int):
+            if h > w:
+                new_h, new_w = self.output_size * h / w, self.output_size
+            else:
+                new_h, new_w = self.output_size, self.output_size * w / h
+
+        else:
+            new_h, new_w = self.output_size
+
+        new_h, new_w = int(new_h), int(new_w)
+
+        img = transform.resize(image, (new_h, new_w))
+
+        # ここで画像の縦横を入れ替える
+        landmarks = landmarks * [new_w / w, new_h / h]
+
+        return {'image': img, 'landmarks': landmarks}
+
+
+class RandomCrop(object):
+
+    def __init__(self, output_size):
+        assert isinstance(output_size, (int, tuple))
+        if isinstance(output_size, int):
+            self.output_size = (output_size, output_size)
+        else:
+            assert len(output_size) == 2
+            self.output_size = output_size
+
+    def __call__(self, sample):
+        image, landmarks = sample['image'], sample['landmarks']
+
+        h, w = image.shape[:2]
+        new_h, new_w = self.output_size
+
+        top = np.random.randint(0, h - new_h)
+        left = np.random.randint(0, w - new_w)
+
+        image = image[top: top + new_h,
+                      left: left + new_w]
+        landmarks = landmarks - [left, top]
+
+        return {'image': image, 'landmarks': landmarks}
+
+
+class ToTensor(object):
+    def __call__(self, sample):
+        image, landmarks = sample['image'], sample['landmarks']
+
+        image = image.transpose((2, 0, 1))
+        # numpy image: 高さ×横×チャンネル
+        # torch image: チャンネル×高さ×横
+        return {'image': torch.from_numpy(image),
+                'landmarks': torch.from_numpy(landmarks)}
+# %%
+scale = Rescale(256)
+crop = RandomCrop(128)
+composed = transforms.Compose([Rescale(256), RandomCrop(224)])
+
+fig = plt.figure()
+sample = face_dataset[65]
+for i, tsfrm in enumerate([scale, crop, composed]):
+    transformed_sample = tsfrm(sample)
+
+    ax = plt.subplot(1, 3, i+1)
+    plt.tight_layout()
+    ax.set_title(type(tsfrm).__name__)
+    show_landmarks(**transformed_sample)
+
+plt.show()
 # %%
